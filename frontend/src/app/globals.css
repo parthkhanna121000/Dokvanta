@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Dokvanta design tokens
+   Layer 1: raw values on :root (and .dark later)
+   Layer 2: @theme inline maps them to Tailwind utilities (bg-background, etc.)
+   Names follow shadcn/ui so its components inherit the look in Phase 1C.
+   ========================================================================== */
+
+:root {
+  /* Shape */
+  --radius: 0.375rem;
+
+  /* Surfaces: warm paper, not pure white */
+  --background: #faf8f4;
+  --foreground: #1b1a17;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #1b1a17;
+  --popover: #ffffff;
+  --popover-foreground: #1b1a17;
+
+  /* Actions: primary is ink; brand blue is for links, focus and highlights */
+  --primary: #1b1a17;
+  --primary-foreground: #faf8f4;
+  --secondary: #f0ede6;
+  --secondary-foreground: #1b1a17;
+  --brand: #2c4a7c;
+  --brand-foreground: #ffffff;
+
+  /* Quiet surfaces and text */
+  --muted: #f0ede6;
+  --muted-foreground: #6a665c;
+  --accent: #ebe7de;
+  --accent-foreground: #1b1a17;
+
+  /* Lines and focus */
+  --border: #e3ded3;
+  --input: #d9d3c6;
+  --ring: #2c4a7c;
+
+  /* Status: used for function only (never decoration) */
+  --destructive: #b3402f;
+  --success: #2f6b4f;
+  --success-soft: #e6f0ea;
+  --warning: #8f6410;
+  --warning-soft: #f7efdb;
+  --danger: #b3402f;
+  --danger-soft: #f8e7e3;
+  --info: #2c5f8d;
+  --info-soft: #e5eef6;
+}
+
+/* Dark theme: stubbed so the architecture is ready. Values are placeholders
+   and not designed or tested yet. Nothing applies .dark in V1. */
+.dark {
+  --background: #141311;
+  --foreground: #f1eee7;
+  --surface: #1c1b18;
+  --card: #1c1b18;
+  --card-foreground: #f1eee7;
+  --popover: #1c1b18;
+  --popover-foreground: #f1eee7;
+  --primary: #f1eee7;
+  --primary-foreground: #141311;
+  --secondary: #26241f;
+  --secondary-foreground: #f1eee7;
+  --brand: #8fa9d4;
+  --brand-foreground: #141311;
+  --muted: #26241f;
+  --muted-foreground: #a09b8f;
+  --accent: #2e2c26;
+  --accent-foreground: #f1eee7;
+  --border: #34312a;
+  --input: #3f3b33;
+  --ring: #8fa9d4;
+  --destructive: #e07a68;
+  --success: #6fbf98;
+  --success-soft: #1d2e26;
+  --warning: #d9a84a;
+  --warning-soft: #33290f;
+  --danger: #e07a68;
+  --danger-soft: #3a1f1a;
+  --info: #7fb0dc;
+  --info-soft: #1a2a38;
+}
+
+@theme inline {
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  /* Fonts (CSS variables come from next/font in layout.tsx) */
+  --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-geist-mono);
+
+  /* Radius: small and consistent */
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  /* Shadows: reserved for floating layers (popovers, dialogs) */
+  --shadow-popover: 0 4px 16px -4px rgb(27 26 23 / 0.12), 0 1px 3px rgb(27 26 23 / 0.08);
+  --shadow-dialog: 0 16px 48px -12px rgb(27 26 23 / 0.2), 0 2px 6px rgb(27 26 23 / 0.08);
+
+  /* Type scale: custom names so Tailwind's defaults (text-sm, text-xl...) stay intact */
+  --text-display: 3.5rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 2.25rem;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.015em;
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.25;
+  --text-subheading: 1.125rem;
+  --text-subheading--line-height: 1.4;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background: var(--background);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--brand) 22%, transparent);
+  }
+}
