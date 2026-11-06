@@ -4,4 +4,5 @@ export const MARKETING_NAV = [
   { label: "AI Intelligence", href: "/#intelligence" },
   { label: "Visual Edit", href: "/#visual-edit" },
   { label: "Document Creator", href: "/#creator" },
+  { label: "Pricing", href: "/#pricing" },
 ] as const;
