@@ -1,321 +1,198 @@
-# PDF Chat Companion 🤖📄
+# Dokvanta
 
-> An AI-powered full-stack application that lets you have natural language conversations with any PDF document — powered by Google Gemini and a custom RAG (Retrieval Augmented Generation) pipeline.
+**The Document Technology Platform.** Create. Understand. Edit. Transform.
 
----
+Dokvanta is a browser-based, PDF-first document platform with three product pillars:
 
-## ✨ Features
+1. **AI Document Intelligence**: read a document, ask questions, and get answers with page-level source references.
+2. **AI Visual Edit**: describe a change in plain language, review each proposed edit, and commit a new revision. The original document is never overwritten.
+3. **Document Creator**: start from a prompt, a template or plain text; edit in a rich-text editor; preview and export a PDF.
 
-### Core AI Features
-
-- **Conversational Q&A** — Ask any question about your PDF in plain English. The AI answers with source citations showing exactly which passage the answer came from, along with a semantic similarity percentage.
-- **RAG Pipeline (from scratch)** — Custom Retrieval Augmented Generation implementation without LangChain. Text is chunked, embedded into 3072-dimensional vectors using `gemini-embedding-001`, and searched via cosine similarity on every query.
-- **Real-Time Streaming** — Answers stream word-by-word via Server-Sent Events (SSE). Source citations appear instantly before the answer begins.
-- **Multi-Turn Memory** — Conversations are context-aware. Follow-up questions like "explain that more simply" work correctly because the last 6 messages are injected into every prompt.
-- **AI Summarization** — Generate brief, detailed, or bullet-point summaries of any uploaded PDF. Cached in MongoDB after first generation so repeat requests are instant.
-- **Flashcard Generation** — Auto-generate study flashcards (question/answer pairs) from PDF content using structured JSON output from Gemini. Cached per document.
-- **Multi-Document Chat** — Select multiple PDFs simultaneously. The RAG pipeline searches across all selected documents and cites the correct source for each answer.
-
-### PDF Management
-
-- **Drag-and-Drop Upload** — Upload PDFs via drag-and-drop or file picker. Supports multiple files simultaneously.
-- **Non-Blocking Processing** — Upload returns instantly (HTTP 200). Text extraction, chunking, and embedding run in the background. Status updates via polling: `uploading → processing → embedding → ready`.
-- **Real-Time Status Tracking** — Live progress display for each file card during processing pipeline.
-- **Force Re-Embed** — Re-generate embeddings for any document without re-uploading (useful after model changes).
-- **Delete with Cleanup** — Deletes the file from disk, MongoDB Document record, and all associated Embedding vectors.
-- **PDF Viewer** — Inline PDF renderer with page navigation, zoom, and scroll tracking using `react-pdf`.
-
-### Chat Management
-
-- **Multiple Conversations** — Create, switch between, and search conversation sessions. Each session has its own isolated chat history.
-- **Session Persistence** — Conversations stored in MongoDB. History survives server restarts.
-- **Clear History** — Wipe a session's messages from both UI and database.
-- **Auto-Titling** — Conversation titles auto-generate from the first user message.
-- **Suggested Questions** — Quick-start buttons (Summarize, Key Findings, Methodology, Conclusions) when a PDF is selected but no messages exist yet.
-
-### Technical & Performance
-
-- **Two-Level Caching** — In-memory vector cache (lazy-loaded per file) + MongoDB cache for summaries and flashcards.
-- **Rate-Limit-Safe Embedding** — Batch processing: 5 chunks per batch, 200ms between chunks, 500ms between batches to respect Gemini API limits.
-- **Chunking Strategy** — 600-character overlapping chunks (100-char overlap) with sentence-boundary splitting. Capped at 50 chunks to control memory.
-- **Cosine Similarity Search** — Pure JavaScript implementation. O(n) search across stored vectors for top-K relevant chunks.
-- **SSE Streaming** — Uses Fetch API + ReadableStream (not EventSource) to support POST requests with JSON body.
-- **Stale Closure Prevention** — `useRef` used alongside React state for SSE callback correctness.
+> **V1 is a frontend prototype.** There is no backend, database, real authentication or AI model behind the app. All AI responses, documents, revisions and sessions are **simulated** with mock data and mock services. The UI says so wherever it matters.
 
 ---
 
-## 🛠 Tech Stack
+## Status
 
-| Layer           | Technology               | Why                                                                                       |
-| --------------- | ------------------------ | ----------------------------------------------------------------------------------------- |
-| Backend Runtime | Node.js + Express 5      | Non-blocking I/O for concurrent embedding API calls. Express 5 async error handling.      |
-| Database        | MongoDB Atlas + Mongoose | Single DB for metadata and vectors. Flexible schema for cached summaries/flashcards.      |
-| AI Model        | Gemini 2.5 Flash-Lite    | Large context window, cost-efficient, fast for streaming.                                 |
-| Embeddings      | gemini-embedding-001     | 3072 dimensions vs OpenAI ada-002's 1536 — finer semantic distinctions, better retrieval. |
-| Frontend        | Next.js 14 + TypeScript  | App Router, SSR-ready, strong typing between API responses and UI state.                  |
-| Styling         | Tailwind CSS             | Utility-first, no runtime overhead.                                                       |
-| File Upload     | Multer                   | Disk storage, PDF filter, 10MB limit.                                                     |
-| PDF Parsing     | pdf-parse                | Server-side text extraction with metadata (pages, author, title).                         |
-| PDF Viewer      | react-pdf                | Lazy-loaded, IntersectionObserver page tracking, ResizeObserver width scaling.            |
-| File Drop       | react-dropzone           | Drag-and-drop with validation and disabled state.                                         |
-| Toasts          | react-hot-toast          | Upload and processing status notifications.                                               |
+V1 is built in phases. This table is updated as each phase is completed and verified.
+
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Foundation: scaffold, design tokens, UI primitives, route-group layouts | Done |
+| 2A | Marketing: header, hero, product preview, pillars, footer | Code written; verification pending |
+| 2B | Marketing: demo, how it works, use cases, pricing, FAQ | Not started |
+| 3 | Authentication (mock) | Not started |
+| 4 | Workspace shell and dashboard | Not started |
+| 5 | Document management and PDF viewer | Not started |
+| 6 | AI Document Intelligence | Not started |
+| 7 | AI Visual Edit | Not started |
+| 8 | Document Creator, templates, rich-text editor | Not started |
+| 9 | Settings, accessibility, responsive polish, tests | Not started |
+| 10 | Final review | Not started |
 
 ---
 
-## 🏗 Architecture
+## Repository layout
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Next.js Frontend                      │
-│  PDFUploader → FileCard → ChatInterface → PDFViewer          │
-│  lib/api.ts (typed fetch wrapper) ←→ lib/utils.ts            │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP / SSE
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Express 5 Backend                        │
-│                                                             │
-│  /api/pdf/*          /api/chat/*                            │
-│  ┌──────────┐        ┌──────────────┐                       │
-│  │ pdf.js   │        │   chat.js    │                       │
-│  └────┬─────┘        └──────┬───────┘                       │
-│       │                     │                               │
-│  ┌────▼─────┐  ┌────────────▼──────┐  ┌──────────────────┐ │
-│  │pdfService│  │   chatService     │  │embeddingService  │ │
-│  │          │  │  RAG orchestrator │  │  cosine search   │ │
-│  │pdf-parse │  │  prompt builder   │  │  batch embedder  │ │
-│  │chunker   │  │  summary/cards    │  │  vector cache    │ │
-│  └──────────┘  └────────────┬──────┘  └────────┬─────────┘ │
-│                             │                  │           │
-└─────────────────────────────┼──────────────────┼───────────┘
-                              │                  │
-                    ┌─────────▼──────────────────▼─────────┐
-                    │           Google Gemini API            │
-                    │   gemini-2.5-flash-lite (chat)         │
-                    │   gemini-embedding-001 (vectors)       │
-                    └────────────────────────────────────────┘
-                              │
-                    ┌─────────▼──────────────┐
-                    │     MongoDB Atlas       │
-                    │  Document (metadata)    │
-                    │  Embedding (vectors)    │
-                    │  Conversation (history) │
-                    └────────────────────────┘
+```text
+Dokvanta/
+├── frontend/     Dokvanta V1 (Next.js app, active development)
+├── backend/      Legacy PDF Chat Companion API (kept untouched, NOT used by V1)
+├── LICENSE
+└── README.md
 ```
 
----
-
-## 🔄 How RAG Works in This Project
-
-```
-INDEXING (on upload)
-PDF File
-  └─► pdf-parse extracts text (up to 100K chars, 50 pages)
-        └─► Split into 600-char overlapping chunks (max 50)
-              └─► Each chunk → gemini-embedding-001 → 3072-dim vector
-                    └─► Stored in MongoDB Embedding collection
-
-QUERYING (on chat)
-User Question
-  └─► Embed question → 3072-dim vector
-        └─► Cosine similarity vs all stored chunk vectors
-              └─► Top 5 most similar chunks retrieved
-                    └─► Injected into Gemini prompt with conversation history
-                          └─► Gemini streams answer based ONLY on that context
-```
+Work happens on the `feature/dokvanta` branch. `main` is not modified.
 
 ---
 
-## 📡 API Reference
+## Tech stack (frontend)
 
-### PDF Endpoints
+| Area | Choice |
+|---|---|
+| Framework | Next.js 16.4 (App Router, Turbopack), React 19.3 |
+| Language | TypeScript (strict) |
+| Styling | Tailwind CSS v4 (wired through `@tailwindcss/turbopack`), CSS variable design tokens |
+| UI | Hand-written shadcn-style primitives on Radix UI, Lucide icons |
+| Variants and utilities | class-variance-authority, clsx, tailwind-merge |
+| Fonts | Newsreader (serif), Geist (sans), Geist Mono, via `next/font` |
 
-| Method   | Endpoint                         | Description                                               |
-| -------- | -------------------------------- | --------------------------------------------------------- |
-| `POST`   | `/api/pdf/upload`                | Upload PDF (returns immediately, processes in background) |
-| `GET`    | `/api/pdf/status/:filename`      | Poll processing status                                    |
-| `GET`    | `/api/pdf/list`                  | List all uploaded PDFs                                    |
-| `GET`    | `/api/pdf/info/:filename`        | Single PDF metadata                                       |
-| `GET`    | `/api/pdf/embedded`              | List only fully embedded PDFs                             |
-| `POST`   | `/api/pdf/force-embed/:filename` | Delete and regenerate embeddings                          |
-| `POST`   | `/api/pdf/summarize/:filename`   | Generate summary (type: brief/detailed/bullets)           |
-| `POST`   | `/api/pdf/flashcards/:filename`  | Generate flashcards (count param)                         |
-| `DELETE` | `/api/pdf/delete/:filename`      | Delete file, DB record, and vectors                       |
-| `GET`    | `/api/pdf/debug`                 | Show disk files vs DB records                             |
+Planned for later phases: Zod, React Hook Form, PDF.js / react-pdf, Tiptap, Vitest, React Testing Library, Playwright.
 
-### Chat Endpoints
+### Next.js configuration notes
 
-| Method   | Endpoint                       | Description                      |
-| -------- | ------------------------------ | -------------------------------- |
-| `POST`   | `/api/chat/ask`                | RAG Q&A with history persistence |
-| `POST`   | `/api/chat/stream`             | SSE streaming RAG response       |
-| `POST`   | `/api/chat/summarize`          | Summarize via chat route         |
-| `POST`   | `/api/chat/flashcards`         | Flashcards via chat route        |
-| `GET`    | `/api/chat/history/:sessionId` | Get session messages             |
-| `DELETE` | `/api/chat/history/:sessionId` | Clear session history            |
-| `GET`    | `/api/chat/sessions`           | List all sessions                |
-| `GET`    | `/api/chat/test-gemini`        | Test Gemini connection           |
-| `GET`    | `/api/chat/test-embedding`     | Test embedding model             |
+`frontend/next.config.ts` enables `cacheComponents` and `partialPrefetching` (they must be enabled together). With Cache Components:
+
+- Rendering is dynamic by default; a static shell is prerendered and dynamic parts stream in behind `<Suspense>`.
+- Navigating away keeps a route mounted but hidden (React `<Activity>`), so effects clean up and re-run. Object URLs, timers and listeners must be released in effect cleanups.
+- Route files must not export `runtime`.
+
+Tailwind is loaded by a Turbopack rule in `next.config.ts`. There is intentionally no `postcss.config.mjs`.
+
+The bundled Next.js docs live in `frontend/node_modules/next/dist/docs/` and should be consulted before writing framework-specific code (see `frontend/AGENTS.md`).
 
 ---
 
-## 🚀 Getting Started
+## Getting started
 
-### Prerequisites
+Requirements: Node.js 20.9 or newer, npm.
 
-- Node.js 18+
-- MongoDB Atlas account (free tier works)
-- Google AI Studio API key (free at [aistudio.google.com](https://aistudio.google.com))
-
-### Backend Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/pdf-chat-companion.git
-cd pdf-chat-companion/backend
-
-# Install dependencies
+```powershell
+cd frontend
 npm install
-
-# Create environment file
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```env
-MONGODB_URI=mongodb+srv://YOUR_CLUSTER_URL/pdf-chat-companion
-GEMINI_API_KEY=your_gemini_api_key_here
-PORT=5000
-```
-
-```bash
-# Start the backend
 npm run dev
-# Server runs on http://localhost:5000
 ```
 
-### Frontend Setup
+Open http://localhost:3000.
 
-```bash
-cd ../frontend
+No environment variables are required for V1. Do not commit `.env*` files.
 
-# Install dependencies
-npm install
+### Checks
 
-# Create environment file
-cp .env.example .env.local
+```powershell
+cd frontend
+npx tsc --noEmit
+npm run lint
 ```
 
-Edit `.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-```
-
-```bash
-# Start the frontend
-npm run dev
-# App runs on http://localhost:3000
-```
-
-### Verify Setup
-
-```bash
-# Check backend health
-curl http://localhost:5000/health
-
-# Test Gemini connection
-curl http://localhost:5000/api/chat/test-gemini
-
-# Test embedding model
-curl http://localhost:5000/api/chat/test-embedding
-```
+Do not run `npm audit fix --force`; it can break the dependency set.
 
 ---
 
-## 📁 Project Structure
+## Frontend structure
 
-```
-backend/
-├── config/
-│   ├── database.js          # MongoDB connection
-│   └── gemini.js            # Gemini SDK wrappers (chat, summary, flashcard, embedding models)
-├── middleware/
-│   └── upload.js            # Multer config (disk storage, PDF filter, 10MB limit)
-├── models/
-│   ├── Document.js          # PDF metadata + summary/flashcard cache
-│   ├── Embedding.js         # Vector storage (chunks with 3072-dim embeddings)
-│   └── Conversation.js      # Chat session history
-├── routers/
-│   ├── pdf.js               # PDF upload, status, summarize, flashcards, delete
-│   └── chat.js              # Ask, stream, history, sessions
-├── services/
-│   ├── pdfService.js        # Text extraction, chunking, document CRUD
-│   ├── embeddingService.js  # Cosine similarity, vector storage, lazy cache
-│   └── chatService.js       # RAG pipeline, prompt builder, summary, flashcards
-├── uploads/                 # PDF files stored here
-└── index.js                 # Express server entry point
-
-frontend/
-├── app/
-│   ├── globals.css          # Tailwind + CSS variables
-│   ├── layout.tsx           # Root layout with DM Sans font + Toaster
-│   └── page.tsx             # Main shell: sidebar, conversations, PDF manager
+```text
+frontend/src/
+├── app/                     Routes and layouts only
+│   ├── layout.tsx           Root layout: fonts, metadata
+│   ├── globals.css          Design tokens
+│   ├── not-found.tsx
+│   ├── error.tsx
+│   ├── (marketing)/         Public site (header + footer layout)
+│   ├── (auth)/              Authentication screens (centered layout)
+│   └── (workspace)/         Authenticated app (shell layout)
 ├── components/
-│   ├── ChatInterface.tsx    # SSE streaming chat, message history, source citations
-│   ├── features/
-│   │   ├── PDFUploader.tsx  # Dropzone, upload flow, status polling
-│   │   └── PDFViewer.tsx    # react-pdf with IntersectionObserver page tracking
-│   └── ui/
-│       ├── FileCard.tsx     # Per-PDF card with status, actions, selection
-│       ├── Badge.tsx        # Semantic status badges
-│       ├── Button.tsx       # Reusable button variants
-│       └── LoadingSpinner.tsx
-├── lib/
-│   ├── api.ts               # Typed axios/fetch wrappers for all endpoints
-│   └── utils.ts             # cn(), formatTime(), generateSessionId(), getPDFUrl()
-├── context/
-│   └── ThemeContext.tsx     # Light/dark/system theme with FOFT prevention
-└── types/
-    └── index.ts             # Shared TypeScript interfaces
+│   ├── ui/                  Button, Input, Label, Badge, Separator, Skeleton,
+│   │                        Tooltip, DropdownMenu, Dialog, Sheet
+│   ├── feedback/            EmptyState, ErrorState
+│   └── layout/              Logo, MarketingHeader, MobileNav, MarketingFooter
+├── features/
+│   └── marketing/           Landing-page content and sections
+└── lib/
+    ├── constants/           site.ts, navigation.ts
+    └── utils/               cn.ts
 ```
 
----
+Rules:
 
-## ⚠️ Known Limitations
+- `app/` contains routes and layouts only. Shared UI goes in `components/`; feature code goes in `features/<feature>/`.
+- Feature folders are created when their phase begins.
+- Server Components by default. `"use client"` only where state, effects or browser APIs are needed (currently the Tooltip, Dropdown Menu, Dialog, Sheet and `MobileNav`).
 
-- **Scanned PDFs not supported** — `pdf-parse` requires selectable text. Image-only PDFs return empty.
-- **50-chunk cap** — Very long documents (200+ pages) lose content past the first ~30-40 pages. Chunk count does not scale with document length.
-- **Linear vector search** — O(n×m) cosine scan. Works for hundreds of chunks; would not scale to millions without an indexed ANN solution (HNSW).
-- **Stream endpoint does not save history** — SSE streaming responses are not persisted to the Conversation collection.
-- **Page numbers show 0** — `pdf-parse` does not provide per-chunk page attribution. All sources show `page: 0`.
-- **No authentication** — Any client with the filename can access any PDF's vectors, summaries, and chat history.
-- **Single-server architecture** — Background processing would fail across multiple instances. Requires a job queue (BullMQ) for horizontal scaling.
+### Planned service layer
 
----
+Components will depend on typed service interfaces, never on mock data directly.
 
-## 🔮 Planned Features
+```text
+src/services/
+├── interfaces/    Contracts (DocumentService, AuthService, ...)
+├── mock/          Mock implementations and mock data
+└── index.ts       The single place that wires implementations
+```
 
-- [ ] JWT authentication — scope documents and conversations to users
-- [ ] BullMQ job queue for PDF processing — retries, parallel workers, dead letter handling
-- [ ] MongoDB Atlas Vector Search — replace linear scan with HNSW index
-- [ ] Highlight-to-Ask — select PDF text to auto-populate chat input
-- [ ] Cross-document contradiction detection — compare claims across multiple PDFs
-- [ ] Spaced repetition (SRS) for flashcards — SM-2 algorithm with daily review scheduling
-- [ ] Voice input + TTS output — Web Speech API integration
-- [ ] PDF annotation export — generate highlighted PDFs showing source chunks used
-- [ ] Prompt injection defense — sanitize extracted text, use Gemini system field for instructions
-- [ ] Adaptive chunking — split at semantic boundaries rather than fixed character count
+Replacing the mock implementations with real ones should not require UI changes. Mock authentication will store only non-sensitive session fields (never a password) in browser storage and is **not real security**; real authentication and authorization must be implemented by a backend.
 
 ---
 
-## 🤝 Contributing
+## Design system
 
-Pull requests are welcome. For major changes, open an issue first to discuss the proposed change.
+Editorial typography, Swiss-style structure, restrained minimalism. Light theme first; a dark token set is stubbed but not yet designed or used.
+
+- **Color tokens:** warm paper background (`#faf8f4`), ink text (`#1b1a17`), one brand blue (`#2c4a7c`) for links, focus and highlights. Status colors (success, warning, danger, info) are used for function only and always accompanied by a text label.
+- **Type:** Newsreader for headings and long-form document content, Geist for the interface. Custom scale: `text-display`, `text-title`, `text-heading`, `text-subheading`.
+- **Shape and elevation:** small radii (`--radius: 0.375rem`), borders over shadows; shadows only for floating layers (`shadow-popover`, `shadow-dialog`).
+- **Accessibility:** visible focus rings, labelled landmarks, dialogs with required titles, meaning never conveyed by color alone.
+
+All tokens are defined in `frontend/src/app/globals.css`.
 
 ---
 
-## 📄 License
+## Routes
 
-MIT
+Currently implemented: `/` (marketing home), `/login` (placeholder), `/dashboard` (placeholder), plus the 404 and error pages.
+
+Planned: `/features`, `/pricing`, `/about`, `/signup`, `/forgot-password`, `/documents`, `/documents/[documentId]`, `/intelligence`, `/visual-edit`, `/creator`, `/creator/ai`, `/creator/from-text`, `/creator/editor/[documentId]`, `/templates`, `/settings`.
+
+---
+
+## Principles for the Visual Edit feature (design contract)
+
+The original document is never overwritten.
+
+```text
+Original document -> Proposed operations -> Temporary document state
+                  -> Individual review (accept / reject) -> Commit new revision
+```
+
+Accepting an operation and committing a revision are separate actions. Each operation has an id, type (insert, delete, replace, rewrite paragraph, expand section, move section, modify heading), target page, target text, proposed content, status (pending, accepted, rejected) and a human-readable explanation.
+
+---
+
+## Legacy backend (not part of V1)
+
+`backend/` holds the earlier **PDF Chat Companion** prototype: an Express 5 API with MongoDB (Mongoose), Google Gemini for chat and embeddings, and a from-scratch RAG pipeline (chunking, embeddings, cosine similarity search, SSE streaming). It is kept untouched for a future backend phase and is **not called by the V1 frontend**.
+
+Its own configuration uses `backend/.env` (`MONGODB_URI`, `GEMINI_API_KEY`, `PORT`), which is git-ignored. Known limitations of that prototype: no authentication, no per-chunk page attribution, linear vector search, background processing not safe across multiple instances.
+
+---
+
+## Contributing and workflow
+
+- Develop on `feature/dokvanta`; do not commit to `main`.
+- Never commit `.env*`, `node_modules` or `.next`.
+- Use conventional-style commit messages, for example `feat(frontend): add marketing header, hero, pillars and footer`.
+- Update the Status table in this README when a phase is completed and verified.
+
+## License
+
+See [LICENSE](./LICENSE).
