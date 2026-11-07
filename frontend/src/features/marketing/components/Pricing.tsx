@@ -44,7 +44,7 @@ export function Pricing() {
                 variant={plan.highlighted ? "default" : "outline"}
                 className="mt-8"
               >
-                <Link href="/dashboard">Try the prototype</Link>
+                <Link href="/signup">Try the prototype</Link>
               </Button>
             </article>
           ))}

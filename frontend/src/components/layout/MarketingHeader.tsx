@@ -28,7 +28,7 @@ export function MarketingHeader() {
             <Link href="/login">Sign in</Link>
           </Button>
           <Button asChild size="sm">
-            <Link href="/dashboard">Get started</Link>
+            <Link href="/signup">Get started</Link>
           </Button>
         </div>
 

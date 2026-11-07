@@ -48,7 +48,7 @@ export function MobileNav() {
           </SheetClose>
           <SheetClose asChild>
             <Button asChild>
-              <Link href="/dashboard">Get started</Link>
+              <Link href="/signup">Get started</Link>
             </Button>
           </SheetClose>
         </div>
