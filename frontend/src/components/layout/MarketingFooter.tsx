@@ -39,7 +39,7 @@ export function MarketingFooter() {
               </Link>
             </li>
             <li>
-              <Link href="/dashboard" className="hover:underline">
+              <Link href="/signup" className="hover:underline">
                 Get started
               </Link>
             </li>
