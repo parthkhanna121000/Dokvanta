@@ -4,9 +4,9 @@ import { EmptyState } from "@/components/feedback/EmptyState";
 import { Button } from "@/components/ui/button";
 import { DocumentStatusBadge } from "@/features/documents/components/DocumentStatusBadge";
 import { formatBytes, formatDate } from "@/lib/utils/format";
-import type { Document } from "@/types/document";
+import type { DocumentRecord } from "@/types/document";
 
-export function RecentDocuments({ documents }: { documents: readonly Document[] }) {
+export function RecentDocuments({ documents }: { documents: readonly DocumentRecord[] }) {
   const recent = [...documents].sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt)).slice(0, 5);
 
   return (

@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { dashboardService, documentService } from "@/services";
 import type { ActivityItem, StorageUsage } from "@/types/dashboard";
-import type { Document } from "@/types/document";
+import type { DocumentRecord } from "@/types/document";
 
 export type DashboardState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; documents: Document[]; activity: ActivityItem[]; storage: StorageUsage };
+  | { status: "ready"; documents: DocumentRecord[]; activity: ActivityItem[]; storage: StorageUsage };
 
 /**
  * Loads everything the dashboard needs through the service interfaces.

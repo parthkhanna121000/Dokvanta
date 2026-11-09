@@ -1,7 +1,11 @@
 ﻿export type DocumentKind = "pdf" | "created";
 export type DocumentStatus = "ready" | "processing" | "failed" | "draft";
 
-export interface Document {
+/**
+ * A document in the workspace. Named DocumentRecord so it never shadows
+ * the DOM's global Document type.
+ */
+export interface DocumentRecord {
   id: string;
   name: string;
   kind: DocumentKind;
