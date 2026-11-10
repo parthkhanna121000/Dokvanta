@@ -11,8 +11,9 @@ export type DocumentsState =
 
 /**
  * Loads the document list through the service interface and keeps it in sync
- * after rename and delete. `rename` and `remove` reject on failure, so the
- * dialog that called them can show its own error and stay open.
+ * after rename, delete and upload. `rename` and `remove` reject on failure, so the
+ * dialog that called them can show its own error and stay open. `add` is called
+ * with a record the service has already committed (a finished upload).
  */
 export function useDocuments() {
   const [attempt, setAttempt] = useState(0);
@@ -57,5 +58,13 @@ export function useDocuments() {
     );
   }, []);
 
-  return { state, retry, rename, remove };
+  const add = useCallback((doc: DocumentRecord) => {
+    setState((prev) =>
+      prev.status === "ready"
+        ? { ...prev, documents: [doc, ...prev.documents.filter((d) => d.id !== doc.id)] }
+        : prev,
+    );
+  }, []);
+
+  return { state, retry, rename, remove, add };
 }

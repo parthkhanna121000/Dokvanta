@@ -16,3 +16,12 @@ export interface DocumentRecord {
   /** ISO 8601 string. Fixed in mock data so rendering is deterministic. */
   modifiedAt: string;
 }
+
+/**
+ * What an upload reports while it runs. "uploading" carries a 0-100 percent;
+ * "processing" means the bytes arrived and the service is preparing the document.
+ * Completion is NOT an event: it is the upload promise resolving.
+ */
+export type UploadProgressEvent =
+  | { stage: "uploading"; percent: number }
+  | { stage: "processing" };

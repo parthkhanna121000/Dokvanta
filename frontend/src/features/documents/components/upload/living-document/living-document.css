@@ -1,0 +1,230 @@
+﻿/* Living Document: the upload animation.
+   Decorative only (aria-hidden in the markup). Every default value below is the
+   FINAL, static state; animations only enhance it. So prefers-reduced-motion
+   just switches the animations off and the result still reads correctly. */
+
+.ld {
+  position: relative;
+  width: 11rem;
+  height: 14.5rem;
+  margin-inline: auto;
+  color: var(--foreground);
+}
+
+.ld-float {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- Sheets ------------------------------------------------------------ */
+
+.ld-sheet {
+  position: absolute;
+  left: 1.5rem;
+  top: 1.75rem;
+  width: 8rem;
+  height: 10.5rem;
+  background: var(--surface);
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+}
+
+.ld-sheet[data-layer="back"],
+.ld-sheet[data-layer="mid"] {
+  opacity: 0;
+}
+
+/* ---- Idle: slow float -------------------------------------------------- */
+
+.ld[data-phase="idle"] .ld-float {
+  animation: ld-float 6s ease-in-out infinite;
+}
+
+/* ---- Processing: layers separate and reassemble ------------------------ */
+
+.ld[data-phase="processing"] .ld-sheet[data-layer="back"] {
+  opacity: 1;
+  animation: ld-sep-back 2.4s ease-in-out infinite;
+}
+.ld[data-phase="processing"] .ld-sheet[data-layer="mid"] {
+  opacity: 1;
+  animation: ld-sep-mid 2.4s ease-in-out infinite;
+}
+.ld[data-phase="processing"] .ld-sheet[data-layer="front"] {
+  animation: ld-sep-front 2.4s ease-in-out infinite;
+}
+
+/* ---- Success: layers converge into one sheet --------------------------- */
+
+.ld[data-phase="success"] .ld-sheet[data-layer="back"] {
+  animation: ld-conv-back 0.5s ease-out;
+}
+.ld[data-phase="success"] .ld-sheet[data-layer="mid"] {
+  animation: ld-conv-mid 0.5s ease-out;
+}
+.ld[data-phase="success"] .ld-sheet[data-layer="front"] {
+  animation: ld-conv-front 0.5s ease-out;
+}
+
+/* ---- Error: restrained, static ----------------------------------------- */
+
+.ld[data-phase="error"] .ld-sheet[data-layer="front"] {
+  border-color: var(--danger);
+}
+
+/* ---- Scan frame (uploading) -------------------------------------------- */
+
+.ld-frame {
+  position: absolute;
+  left: 0.75rem;
+  top: 1rem;
+  width: 9.5rem;
+  height: 12rem;
+  animation: ld-fade-in 0.3s ease-out backwards;
+}
+
+.ld-corner {
+  position: absolute;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 0 solid var(--foreground);
+}
+.ld-corner[data-corner="tl"] { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; }
+.ld-corner[data-corner="tr"] { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; }
+.ld-corner[data-corner="bl"] { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.ld-corner[data-corner="br"] { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+.ld-scan {
+  position: absolute;
+  left: 1.5rem;
+  top: 1.75rem;
+  width: 8rem;
+  height: 2px;
+  background: var(--brand);
+  animation: ld-scan 1.8s ease-in-out infinite alternate;
+}
+
+/* The progress track is the real percentage. Under reduced motion it is
+   the only moving-free indicator left, since the scan line is hidden. */
+.ld-track {
+  position: absolute;
+  left: 1.5rem;
+  top: 13.25rem;
+  width: 8rem;
+  height: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.ld-track > span {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  transform-origin: left center;
+  transform: scaleX(var(--ld-progress, 0));
+  transition: transform 170ms linear;
+}
+
+/* ---- Badges (success check / error mark) ------------------------------- */
+
+.ld-badge {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1.5px solid;
+  border-radius: 9999px;
+  animation: ld-pop 0.35s ease-out 0.3s backwards;
+}
+.ld-badge[data-kind="success"] {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: var(--success);
+}
+.ld-badge[data-kind="error"] {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  animation-delay: 0s;
+}
+
+.ld-check {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.ld-check path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: ld-draw 0.45s ease-out 0.55s backwards;
+}
+
+/* ---- Keyframes --------------------------------------------------------- */
+
+@keyframes ld-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes ld-fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes ld-scan {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(10.5rem - 2px)); }
+}
+
+@keyframes ld-sep-back {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-14px, -10px) rotate(-5deg); }
+}
+@keyframes ld-sep-mid {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(14px, -4px) rotate(4deg); }
+}
+@keyframes ld-sep-front {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+@keyframes ld-conv-back {
+  from { transform: translate(-14px, -10px) rotate(-5deg); opacity: 1; }
+  to { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+}
+@keyframes ld-conv-mid {
+  from { transform: translate(14px, -4px) rotate(4deg); opacity: 1; }
+  to { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+}
+@keyframes ld-conv-front {
+  from { transform: translateY(4px); }
+  to { transform: translateY(0); }
+}
+
+@keyframes ld-pop {
+  from { opacity: 0; transform: scale(0.85); }
+}
+
+@keyframes ld-draw {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  1% { stroke-dashoffset: 1; opacity: 1; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ld,
+  .ld * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .ld-scan {
+    display: none;
+  }
+}
