@@ -1,11 +1,11 @@
 ﻿import type { Metadata } from "next";
-import { ComingSoon } from "@/features/workspace/components/ComingSoon";
+import { DocumentsView } from "@/features/documents/components/DocumentsView";
 
 // Mock session lives in browser storage, so this page cannot be prerendered.
 export const instant = false;
 
 export const metadata: Metadata = { title: "My Documents" };
 
-export default function Page() {
-  return <ComingSoon title="My Documents" phase="Phase 5" />;
+export default function DocumentsPage() {
+  return <DocumentsView />;
 }
