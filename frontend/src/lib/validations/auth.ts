@@ -47,8 +47,10 @@ export function getPasswordStrength(password: string): PasswordStrength {
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) points++;
   if (/\d/.test(password)) points++;
   if (/[^A-Za-z0-9]/.test(password)) points++;
-  let score = Math.min(4, points) as PasswordStrength["score"];
-  if (password.length < 8) score = Math.min(score, 1) as PasswordStrength["score"];
+  // Any non-empty password is at least "Weak"; short ones are capped at "Weak".
+  let score = Math.max(1, Math.min(4, points));
+  if (password.length < 8) score = 1;
+  const typed = score as PasswordStrength["score"];
   const labels = ["Enter a password", "Weak", "Fair", "Good", "Strong"] as const;
-  return { score, label: labels[score] };
+  return { score: typed, label: labels[typed] };
 }
