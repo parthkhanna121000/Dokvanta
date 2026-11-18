@@ -1,20 +1,26 @@
-# Mac/Linux
-touch .gitignore
-
-# Windows
-echo. > .gitignore
-```
-
-**5. Open `.gitignore` and paste this:**
-```
 # Node
 node_modules/
 .env
 .env.local
+.env.*.local
 .next/
 dist/
+build/
+coverage/
 
 # General
 .DS_Store
 *.log
 uploads/
+
+# New backend runtime data (local storage adapter)
+backend/storage/
+
+# Python (added now, used when ai-service exists)
+__pycache__/
+*.pyc
+.venv/
+
+# Local tooling output
+audit-output.txt
+backend-source.txt
